@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from app.data_imputation import data_imputation
+
 if __name__ == '__main__':
     df = pd.read_csv(
         # "short" for testing and debugging, "full" for production
@@ -32,4 +34,6 @@ if __name__ == '__main__':
                'VIC_AGE_GROUP', 'VIC_RACE', 'VIC_SEX',
                'SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX',
                'Latitude', 'Longitude']]
-    data.head(6)
+    print(data.head(6))
+
+    data_imputation(data)
