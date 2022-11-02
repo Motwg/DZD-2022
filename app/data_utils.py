@@ -43,6 +43,7 @@ def create_df(filepath: str):
 
 def nn_pipeline(df: pd.DataFrame):
     """Pipeline for neural network to predict 'SUSP_RACE', 'SUSP_AGE_GROUP' and 'SUSP_SEX'"""
+
     # replace unknowns
     for col in ['VIC_RACE', 'VIC_AGE_GROUP', 'VIC_SEX',
                 'SUSP_RACE', 'SUSP_AGE_GROUP', 'SUSP_SEX']:
@@ -65,5 +66,13 @@ def nn_pipeline(df: pd.DataFrame):
     target = df[['SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX']].copy()
     for col in ['SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX']:
         df = df.drop(columns=col)
+
+    # convert ordinal to int
+    mapper_age = {'<18': 0, '18-24': 1, '25-44': 2, '45-64': 3, '65+': 4}
+    target['SUSP_AGE_GROUP'] = target['SUSP_AGE_GROUP'].replace(mapper_age)
+
+    # convert categorical to dummy (binary list)
+    for col in ['SUSP_RACE', 'SUSP_SEX']:
+        target = categorical_to_dummy(target, col)
 
     return df, target

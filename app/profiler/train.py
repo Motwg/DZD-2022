@@ -13,7 +13,7 @@ if __name__ == '__main__':
     df, target = nn_pipeline(df)
     print(target.head(10))
 
-    # print(df['PREM_TYP_DESC'].value_counts())
+    print(target['SUSP_AGE_GROUP'].value_counts())
     # target = torch.tensor(df['Targets'].values)
     # features = torch.tensor(df.drop('Targets', axis=1).values)
     #
