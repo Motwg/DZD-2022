@@ -3,6 +3,7 @@ import pandas as pd
 
 if __name__ == '__main__':
     df = pd.read_csv(
+        # "short" for testing and debugging, "full" for production
         'files/NYPD_short.csv',
         dtype={'CMPLNT_NUM': 'str'},
         on_bad_lines='error',
@@ -15,6 +16,20 @@ if __name__ == '__main__':
     )
     for t in ['CMPLNT_FR', 'CMPLNT_TO']:
         df[t] = pd.to_datetime(df[t], format='%H:%M:%S %m/%d/%Y', errors='coerce')
+
+    # edit incorrect age groups
+    for col in ['SUSP_AGE_GROUP', 'VIC_AGE_GROUP']:
+        df.loc[df[col].isna() | df[col].str.isdigit() | df[col].str.startswith('-'), col] = np.NaN
+
+    # edit hispanic race
+    for col in ['VIC_RACE', 'SUSP_RACE']:
+        df[col] = df[col].str.removesuffix(' HISPANIC')
+
     pd.set_option('display.max_columns', None)
     pd.set_option('display.max_rows', None)
-    df.head(7)
+
+    data = df[['CMPLNT_FR', 'BORO_NM', 'PREM_TYP_DESC',
+               'VIC_AGE_GROUP', 'VIC_RACE', 'VIC_SEX',
+               'SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX',
+               'Latitude', 'Longitude']]
+    data.head(6)
