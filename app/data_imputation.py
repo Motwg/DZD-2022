@@ -1,3 +1,4 @@
+import random
 from random import uniform
 
 import pandas as pd
@@ -8,10 +9,10 @@ from pandas import isnull
 def data_imputation(data_frame):
     assert isinstance(data_frame, pd.DataFrame)
 
-    imputation_latitude(data_frame)
+    imputation_latitude_longitude(data_frame, 'Latitude')
+    imputation_latitude_longitude(data_frame, 'Longitude')
     imputation_race(data_frame, 'VIC_RACE')
     imputation_race(data_frame, 'SUSP_RACE')
-    imputation_longitude(data_frame)
     imputation_age(data_frame, 'VIC_AGE_GROUP')
     imputation_age(data_frame, 'SUSP_AGE_GROUP')
     imputation_susp_sex(data_frame)
@@ -21,26 +22,15 @@ def data_imputation(data_frame):
     print(data_frame.head(1000))
 
 
-def imputation_latitude(data_frame):
-    assert isinstance(data_frame, pd.DataFrame)
-    len_na = len(data_frame.loc[data_frame['Latitude'].isna(), 'Latitude'])
-    data_frame.loc[data_frame['Latitude'].isna(), 'Latitude'] = 0
-    x = data_frame['Latitude']
-    print(sum(x) / (len(x) - len_na), len_na)
-    avg = sum(x) / (len(x) - len_na)
-
-    data_frame.loc[data_frame['Latitude'] == 0, 'Latitude'] = avg
-
-
-def imputation_longitude(data_frame):
-    assert isinstance(data_frame, pd.DataFrame)
-    len_na = len(data_frame.loc[data_frame['Longitude'].isna(), 'Longitude'])
-    data_frame.loc[data_frame['Longitude'].isna(), 'Longitude'] = 0
-    x = data_frame['Longitude']
-    print(sum(x) / (len(x) - len_na), len_na)
-    avg = sum(x) / (len(x) - len_na)
-
-    data_frame.loc[data_frame['Longitude'] == 0, 'Longitude'] = avg
+def imputation_latitude_longitude(data_frame, table_name):
+    if table_name == 'Latitude' or table_name == 'Longitude':
+        assert isinstance(data_frame, pd.DataFrame)
+        len_na = len(data_frame.loc[data_frame[table_name].isna(), table_name])
+        data_frame.loc[data_frame[table_name].isna(), table_name] = 0
+        x = data_frame[table_name]
+        print(sum(x) / (len(x) - len_na), len_na)
+        avg = sum(x) / (len(x) - len_na)
+        data_frame.loc[data_frame[table_name] == 0, table_name] = avg
 
 
 def imputation_race(data_frame, race_table_name):
