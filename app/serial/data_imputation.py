@@ -19,8 +19,6 @@ def data_imputation(data_frame):
     imputation_boro(data_frame)
     imputation_prem(data_frame)
 
-    print(data_frame.head(1000))
-
 
 def imputation_latitude_longitude(data_frame, table_name):
     if table_name == 'Latitude' or table_name == 'Longitude':

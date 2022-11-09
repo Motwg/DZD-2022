@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from app.serial.data_imputation import data_imputation
+
 
 def categorical_to_dummy(data_frame: pd.DataFrame, col_name: str):
     """Replaces column categorical data with dummies"""
@@ -74,5 +76,26 @@ def nn_pipeline(df: pd.DataFrame):
     # convert categorical to dummy (binary list)
     for col in ['SUSP_RACE', 'SUSP_SEX']:
         target = categorical_to_dummy(target, col)
+
+    return df, target
+
+
+def serial_pipeline(df: pd.DataFrame):
+    data_imputation(df)
+    # convert categorical to dummy (binary list)
+    for col in ['VIC_RACE', 'VIC_AGE_GROUP', 'VIC_SEX',
+                'SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX',
+                'BORO_NM', 'PREM_TYP_DESC']:
+        df = categorical_to_dummy(df, col)
+
+    # extract hour and month from time
+    df['HOUR'] = df['CMPLNT_FR'].dt.hour
+    df['MONTH'] = df['CMPLNT_FR'].dt.month
+    df = df.drop(columns=['CMPLNT_FR'])
+
+    # extract target
+    target = df[['SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX']].copy()
+    for col in ['SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX']:
+        df = df.drop(columns=col)
 
     return df, target
