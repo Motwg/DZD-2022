@@ -2,7 +2,6 @@ import random
 from random import uniform
 
 import pandas as pd
-import numpy as np
 from pandas import isnull
 
 
@@ -18,6 +17,7 @@ def data_imputation(data_frame):
     imputation_susp_sex(data_frame)
     imputation_vic_sex(data_frame)
     imputation_boro(data_frame)
+    imputation_prem(data_frame)
 
     print(data_frame.head(1000))
 
@@ -194,3 +194,66 @@ def imputation_boro(data_frame):
                 data_frame[brono_table_name][age] = 'STATEN ISLAND'
 
 
+def imputation_prem(data_frame):
+    assert isinstance(data_frame, pd.DataFrame)
+    table_name = 'PREM_TYP_DESC'
+
+    len_na = len(data_frame.loc[data_frame[table_name].isna(), table_name])
+    known_len = len(data_frame[table_name]) - len_na
+
+    street_num = len(data_frame.loc[data_frame[table_name] == 'STREET', table_name])
+    apt_num = len(data_frame.loc[data_frame[table_name] == 'RESIDENCE - APT. HOUSE', table_name])
+    house_num = len(data_frame.loc[data_frame[table_name] == 'RESIDENCE-HOUSE', table_name])
+    publ_house_num = len(data_frame.loc[data_frame[table_name] == 'RESIDENCE - PUBLIC HOUSING', table_name])
+    commercial_num = len(data_frame.loc[data_frame[table_name] == 'COMMERCIAL BUILDING', table_name])
+    chain_store_num = len(data_frame.loc[data_frame[table_name] == 'CHAIN STORE', table_name])
+    subway_num = len(data_frame.loc[data_frame[table_name] == 'TRANSIT - NYC SUBWAY', table_name])
+    department_store_num = len(data_frame.loc[data_frame[table_name] == 'DEPARTMENT STORE', table_name])
+    grocery_num = len(data_frame.loc[data_frame[table_name] == 'GROCERY/BODEGA', table_name])
+    restaurant_num = len(data_frame.loc[data_frame[table_name] == 'RESTAURANT/DINER', table_name])
+
+    street_num_prob = street_num / known_len
+    apt_num_prob = apt_num / known_len
+    house_num_prob = house_num / known_len
+    publ_house_num_prob = publ_house_num / known_len
+    commercial_num_prob = commercial_num / known_len
+    chain_store_num_prob = chain_store_num / known_len
+    subway_num_prob = subway_num / known_len
+    department_store_num_prob = department_store_num / known_len
+    grocery_num_prob = grocery_num / known_len
+    restaurant_num_prob = restaurant_num / known_len
+
+    for prem in data_frame.index:
+        if data_frame[table_name][prem] == 'UNKNOWN' or isnull(data_frame[table_name][prem]):
+            prob = uniform(0, 1)
+            if prob <= street_num_prob:
+                data_frame[table_name][prem] = 'STREET'
+            elif street_num_prob < prob <= street_num_prob + apt_num_prob:
+                data_frame[table_name][prem] = 'RESIDENCE - APT. HOUSE'
+            elif street_num_prob + apt_num_prob < prob <= street_num_prob + apt_num_prob + house_num_prob:
+                data_frame[table_name][prem] = 'RESIDENCE-HOUSE'
+            elif street_num_prob + apt_num_prob + house_num_prob < prob <= street_num_prob + apt_num_prob + house_num_prob + publ_house_num_prob:
+                data_frame[table_name][prem] = 'RESIDENCE - PUBLIC HOUSING'
+            elif street_num_prob + apt_num_prob + house_num_prob + publ_house_num_prob \
+                    < prob <= \
+                    street_num_prob + apt_num_prob + house_num_prob + publ_house_num_prob + commercial_num_prob:
+                data_frame[table_name][prem] = 'COMMERCIAL BUILDING'
+            elif street_num_prob + apt_num_prob + house_num_prob + publ_house_num_prob + commercial_num_prob \
+                    < prob <= \
+                    street_num_prob + apt_num_prob + house_num_prob + publ_house_num_prob + commercial_num_prob + chain_store_num_prob:
+                data_frame[table_name][prem] = 'CHAIN STORE'
+            elif street_num_prob + apt_num_prob + house_num_prob + publ_house_num_prob + commercial_num_prob + chain_store_num_prob \
+                    < prob <= \
+                    street_num_prob + apt_num_prob + house_num_prob + publ_house_num_prob + commercial_num_prob + chain_store_num_prob + subway_num_prob:
+                data_frame[table_name][prem] = 'TRANSIT - NYC SUBWAY'
+            elif street_num_prob + apt_num_prob + house_num_prob + publ_house_num_prob + commercial_num_prob + chain_store_num_prob + subway_num_prob \
+                    < prob <= \
+                    street_num_prob + apt_num_prob + house_num_prob + publ_house_num_prob + commercial_num_prob + chain_store_num_prob + subway_num_prob + department_store_num_prob:
+                data_frame[table_name][prem] = 'DEPARTMENT STORE'
+            elif street_num_prob + apt_num_prob + house_num_prob + publ_house_num_prob + commercial_num_prob + chain_store_num_prob + subway_num_prob + department_store_num_prob \
+                    < prob <= \
+                    street_num_prob + apt_num_prob + house_num_prob + publ_house_num_prob + commercial_num_prob + chain_store_num_prob + subway_num_prob + department_store_num_prob + grocery_num_prob:
+                data_frame[table_name][prem] = 'GROCERY/BODEGA'
+            elif street_num_prob + apt_num_prob + house_num_prob + publ_house_num_prob + commercial_num_prob + chain_store_num_prob + subway_num_prob + department_store_num_prob \
+                    < prob <= 1:
+                data_frame[table_name][prem] = 'RESTAURANT/DINER'
