@@ -48,6 +48,8 @@ def nn_pipeline(df: pd.DataFrame):
     for col in ['VIC_RACE', 'VIC_AGE_GROUP', 'VIC_SEX',
                 'SUSP_RACE', 'SUSP_AGE_GROUP', 'SUSP_SEX']:
         df.loc[df[col].isin(['UNKNOWN', 'U']), col] = np.NaN
+    # delete people (only 5 !) with 'OTHER' races in 6mln set ...
+    df.loc[df['SUSP_RACE'].isin(['OTHER']), 'SUSP_RACE'] = np.NaN
 
     # get only rows with labels
     for col in ['SUSP_RACE', 'SUSP_AGE_GROUP', 'SUSP_SEX']:

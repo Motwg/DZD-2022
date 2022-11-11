@@ -11,29 +11,39 @@ from app.profiler.classifiers.SexClassifier import SexClassifier
 from app.profiler.classifiers.AgeClassifier import AgeClassifier
 from app.profiler.classifiers.RaceClassifier import RaceClassifier
 
+# a01 val
+# epoch, step = 6, 32436
+# r02 val
+# epoch, step = 13, 70278
+# s02 val
+# epoch, step = 9, 48654
 
 if __name__ == '__main__':
-    experiment: str = 's01'  # [sra][01-99]
+    experiment: str = 'a01'  # [sra][01-99]
+    mode: str = 'test'  # 'train' or 'test'
+    load_set: str = 'global'  # 'global' or 'val'
+    epoch, step = 6, 32436  # choose correct if loading from checkpoint
+
+    # optimisation
     device = 'cpu'  # 'gpu' or 'cpu'
     no_workers = min(4, os.cpu_count()//2)
-    data_filename = 'data_full.csv'
-    epoch, step = 67, 6867
-    load = os.path.join('app/profiler/checkpoints', f'SRA_{experiment}',
-                        'global', f'epoch={epoch}-step={step}.ckpt')
-
     # using only 50% of capabilities
     if device == 'gpu':
         torch.cuda.set_per_process_memory_fraction(0.5, 0)
 
+    data_filename = 'data_full.csv'
+    load = os.path.join('app/profiler/checkpoints', f'SRA_{experiment}',
+                        load_set, f'epoch={epoch}-step={step}.ckpt')
+
     if experiment.startswith('s'):
         dl = SRADataloader('s', filename=data_filename, no_workers=no_workers)
-        model = SexClassifier(learning_rate=1e-5)
+        model = SexClassifier(learning_rate=1e-4, weights=dl.get_weights())
     elif experiment.startswith('r'):
         dl = SRADataloader('r', filename=data_filename, no_workers=no_workers)
-        model = RaceClassifier(learning_rate=1e-5)
+        model = RaceClassifier(learning_rate=1e-4, weights=dl.get_weights())
     elif experiment.startswith('a'):
         dl = SRADataloader('a', filename=data_filename, no_workers=no_workers)
-        model = AgeClassifier(learning_rate=1e-5)
+        model = AgeClassifier(learning_rate=1e-4, weights=dl.get_weights())
     else:
         raise Exception(f'Invalid experiment: {experiment}')
 
@@ -45,14 +55,14 @@ if __name__ == '__main__':
     )
     checkpoint_cb = ModelCheckpoint(
         dirpath=f'app/profiler/checkpoints/SRA_{experiment}/global',
-        save_top_k=5,
+        save_top_k=3,
         monitor='epoch',
         mode='max'
     )
     early_stop_cb = EarlyStopping(
         monitor='val_acc',
-        min_delta=0.00,
-        patience=10,
+        min_delta=0.0001,
+        patience=5,
         verbose=False,
         mode='max'
     )
@@ -85,14 +95,13 @@ if __name__ == '__main__':
             checkpoint_val_cb
         ]
     )
-    # dm.setup('fit')
-    # inputs, classes = next(iter(dm.train_dataloader()))
-    # print(classes)
 
     trainer.tune(model)
-    try:
-        trainer.fit(model, dl, ckpt_path=load)
-    except (PermissionError, FileNotFoundError):
-        trainer.fit(model, dl)
 
-    # trainer.test(model, dl, ckpt_path=load)
+    if mode == 'train':
+        try:
+            trainer.fit(model, dl, ckpt_path=load)
+        except (PermissionError, FileNotFoundError):
+            trainer.fit(model, dl)
+    elif mode == 'test':
+        trainer.test(model, dl, ckpt_path=load)
