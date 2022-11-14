@@ -1,5 +1,9 @@
 import numpy as np
 import pandas as pd
+# Import LabelEncoder
+from sklearn import preprocessing
+
+from app.serial.data_imputation import data_imputation
 
 
 def categorical_to_dummy(data_frame: pd.DataFrame, col_name: str):
@@ -91,3 +95,19 @@ def nn_pipeline(df: pd.DataFrame):
     df['SUSP_RACE'] = df['SUSP_RACE'].replace(mapper_race)
 
     return df
+
+
+def serial_pipeline(df: pd.DataFrame):
+    data_imputation(df)
+    imp_df = df.copy()
+    # creating labelEncoder
+    le = preprocessing.LabelEncoder()
+    # Converting string labels into numbers.
+    # convert categorical to dummy (binary list)
+    for col in ['VIC_RACE', 'VIC_AGE_GROUP', 'VIC_SEX',
+                'SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX',
+                'BORO_NM', 'PREM_TYP_DESC', 'CMPLNT_FR']:
+        df[col] = le.fit_transform(df[col])
+
+    return df, imp_df
+

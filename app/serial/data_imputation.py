@@ -8,6 +8,7 @@ from pandas import isnull
 def data_imputation(data_frame):
     assert isinstance(data_frame, pd.DataFrame)
 
+    imputation_month_and_hour(data_frame)
     imputation_latitude_longitude(data_frame, 'Latitude')
     imputation_latitude_longitude(data_frame, 'Longitude')
     imputation_race(data_frame, 'VIC_RACE')
@@ -18,8 +19,6 @@ def data_imputation(data_frame):
     imputation_vic_sex(data_frame)
     imputation_boro(data_frame)
     imputation_prem(data_frame)
-
-    print(data_frame.head(1000))
 
 
 def imputation_latitude_longitude(data_frame, table_name):
@@ -257,3 +256,10 @@ def imputation_prem(data_frame):
             elif street_num_prob + apt_num_prob + house_num_prob + publ_house_num_prob + commercial_num_prob + chain_store_num_prob + subway_num_prob + department_store_num_prob \
                     < prob <= 1:
                 data_frame[table_name][prem] = 'RESTAURANT/DINER'
+
+
+def imputation_month_and_hour(df: pd.DataFrame):
+    df = df.dropna()
+    df['HOUR'] = df['CMPLNT_FR'].dt.hour
+    df['MONTH'] = df['CMPLNT_FR'].dt.month
+    df = df.drop(columns=['CMPLNT_FR'])
