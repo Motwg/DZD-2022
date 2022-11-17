@@ -12,7 +12,7 @@ if __name__ == '__main__':
     neighbors = NearestNeighbors(algorithm='ball_tree').fit(df)
     dist, indices = neighbors.kneighbors(df)
     # for j in range(142675):
-    for j in range(1):
+    for j in range(5):
         print('Crimes similar to crime number ' + str(j))
         for i in range(4):
             if dist[j][i] < 10.0:

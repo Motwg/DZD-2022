@@ -99,15 +99,26 @@ def nn_pipeline(df: pd.DataFrame):
 
 def serial_pipeline(df: pd.DataFrame):
     data_imputation(df)
+
     imp_df = df.copy()
+
+    # extract hour and month from time
+    df['HOUR'] = df['CMPLNT_FR'].dt.hour
+    df['MONTH'] = df['CMPLNT_FR'].dt.month
+    df = df.drop(columns=['CMPLNT_FR'])
+
+    # imp_df = df.copy()
     # creating labelEncoder
     le = preprocessing.LabelEncoder()
     # Converting string labels into numbers.
     # convert categorical to dummy (binary list)
     for col in ['VIC_RACE', 'VIC_AGE_GROUP', 'VIC_SEX',
                 'SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX',
-                'BORO_NM', 'PREM_TYP_DESC', 'CMPLNT_FR']:
+                'BORO_NM', 'PREM_TYP_DESC', 'HOUR', 'MONTH']:
         df[col] = le.fit_transform(df[col])
+
+    for col in ['SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX']:
+        df[col] *= 2
 
     return df, imp_df
 
