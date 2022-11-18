@@ -1,5 +1,9 @@
 import numpy as np
 import pandas as pd
+# Import LabelEncoder
+from sklearn import preprocessing
+
+from app.serial.data_imputation import data_imputation
 
 
 def categorical_to_dummy(data_frame: pd.DataFrame, col_name: str):
@@ -48,31 +52,73 @@ def nn_pipeline(df: pd.DataFrame):
     for col in ['VIC_RACE', 'VIC_AGE_GROUP', 'VIC_SEX',
                 'SUSP_RACE', 'SUSP_AGE_GROUP', 'SUSP_SEX']:
         df.loc[df[col].isin(['UNKNOWN', 'U']), col] = np.NaN
+    # delete people (only 5 !) with 'OTHER' races in 6mln set ...
+    df.loc[df['SUSP_RACE'].isin(['OTHER']), 'SUSP_RACE'] = np.NaN
 
     # get only rows with labels
     for col in ['SUSP_RACE', 'SUSP_AGE_GROUP', 'SUSP_SEX']:
+        df = df[df[col].notna()]
+
+    # get only rows with latitude, longitude and complaint time
+    for col in ['CMPLNT_FR', 'Latitude', 'Longitude']:
         df = df[df[col].notna()]
 
     # convert categorical to dummy (binary list)
     for col in ['VIC_RACE', 'VIC_AGE_GROUP', 'VIC_SEX', 'BORO_NM', 'PREM_TYP_DESC']:
         df = categorical_to_dummy(df, col)
 
+    # normalise Latitude and Longitude
+    df['Latitude'] = df['Latitude'].transform(lambda x: x - 40.0)
+    df['Longitude'] = df['Longitude'].transform(lambda x: x + 74.0)
+
     # extract hour and month from time
     df['HOUR'] = df['CMPLNT_FR'].dt.hour
     df['MONTH'] = df['CMPLNT_FR'].dt.month
     df = df.drop(columns=['CMPLNT_FR'])
 
-    # extract target
-    target = df[['SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX']].copy()
-    for col in ['SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX']:
-        df = df.drop(columns=col)
+    # convert ordinal/categorical labels to int
+    df['SUSP_SEX'] = df['SUSP_SEX'].replace({'M': 0, 'F': 1})
+    mapper_age = {
+        '<18': 0,
+        '18-24': 1,
+        '25-44': 2,
+        '45-64': 3,
+        '65+': 4
+    }
+    df['SUSP_AGE_GROUP'] = df['SUSP_AGE_GROUP'].replace(mapper_age)
+    mapper_race = {
+        'WHITE': 0,
+        'BLACK': 1,
+        'ASIAN / PACIFIC ISLANDER': 2,
+        'AMERICAN INDIAN/ALASKAN NATIVE': 3
+    }
+    df['SUSP_RACE'] = df['SUSP_RACE'].replace(mapper_race)
 
-    # convert ordinal to int
-    mapper_age = {'<18': 0, '18-24': 1, '25-44': 2, '45-64': 3, '65+': 4}
-    target['SUSP_AGE_GROUP'] = target['SUSP_AGE_GROUP'].replace(mapper_age)
+    return df
 
+
+def serial_pipeline(df: pd.DataFrame):
+    data_imputation(df)
+
+    imp_df = df.copy()
+
+    # extract hour and month from time
+    df['HOUR'] = df['CMPLNT_FR'].dt.hour
+    df['MONTH'] = df['CMPLNT_FR'].dt.month
+    df = df.drop(columns=['CMPLNT_FR'])
+
+    # imp_df = df.copy()
+    # creating labelEncoder
+    le = preprocessing.LabelEncoder()
+    # Converting string labels into numbers.
     # convert categorical to dummy (binary list)
-    for col in ['SUSP_RACE', 'SUSP_SEX']:
-        target = categorical_to_dummy(target, col)
+    for col in ['VIC_RACE', 'VIC_AGE_GROUP', 'VIC_SEX',
+                'SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX',
+                'BORO_NM', 'PREM_TYP_DESC', 'HOUR', 'MONTH']:
+        df[col] = le.fit_transform(df[col])
 
-    return df, target
+    for col in ['SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX']:
+        df[col] *= 2
+
+    return df, imp_df
+

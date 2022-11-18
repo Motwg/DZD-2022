@@ -1,6 +1,6 @@
-import numpy as np
 import pandas as pd
 
+from app.serial.data_imputation import data_imputation
 from app.data_utils import create_df
 
 if __name__ == '__main__':
@@ -10,3 +10,4 @@ if __name__ == '__main__':
     # "short" for testing and debugging, "full" for production
     df = create_df('files/NYPD_short.csv')
     print(df.head(10))
+
